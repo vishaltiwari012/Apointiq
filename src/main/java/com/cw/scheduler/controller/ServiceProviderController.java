@@ -1,0 +1,26 @@
+package com.cw.scheduler.controller;
+
+import com.cw.scheduler.advice.ApiResponse;
+import com.cw.scheduler.dto.response.ServiceProviderResponseDTO;
+import com.cw.scheduler.service.interfaces.ServiceProviderService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/providers")
+@RequiredArgsConstructor
+@PreAuthorize("hasRole('SERVICE_PROVIDER')")
+public class ServiceProviderController {
+
+    private final ServiceProviderService serviceProviderService;
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<ServiceProviderResponseDTO>> getMyProviderProfile() {
+        ApiResponse<ServiceProviderResponseDTO> response = serviceProviderService.getMyProviderProfile();
+        return ResponseEntity.ok(response);
+    }
+}

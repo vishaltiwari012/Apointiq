@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Application Approved</title>
+</head>
+<body style="font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px;">
+<table align="center" width="600" style="background: white; border-radius: 10px; padding: 20px;">
+    <tr>
+        <td>
+            <h2 style="color: #4CAF50;">Hi <span th:text="${name}">User</span>,</h2>
+            <p>We're happy to let you know that your application to become a service provider on <strong>Apointiq</strong> has been <strong>approved</strong>!</p>
+            <p>You can now log in using your email and password to access the service provider dashboard.</p>
+            <div style="margin: 20px 0;">
+                <a th:href="${dashboardUrl}" style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Go to Dashboard</a>
+            </div>
+            <p>We wish you great success ahead!</p>
+            <p>– The Apointiq Team</p>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

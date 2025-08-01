@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Application Rejected</title>
+</head>
+<body style="font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px;">
+<table align="center" width="600" style="background: white; border-radius: 10px; padding: 20px;">
+    <tr>
+        <td>
+            <h2 style="color: #e53935;">Hi <span th:text="${name}">User</span>,</h2>
+            <p>We regret to inform you that your application to become a service provider on <strong>Apointiq</strong> has been <strong>rejected</strong>.</p>
+            <p>Reason: <strong th:text="${rejectionReason}">[Rejection reason here]</strong></p>
+            <p>If you believe this is a mistake, feel free to reach out to our support team for clarification.</p>
+            <p>Thank you for your interest.</p>
+            <p>– The Apointiq Team</p>
+        </td>
+    </tr>
+</table>
+</body>
+</html>
