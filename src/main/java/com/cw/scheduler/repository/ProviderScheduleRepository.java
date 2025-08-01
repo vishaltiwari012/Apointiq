@@ -25,12 +25,10 @@ public interface ProviderScheduleRepository extends JpaRepository<ProviderSchedu
     List<ProviderSchedule> findAllByDayOfWeek(@Param("dayOfWeek") DayOfWeek dayOfWeek);
 
     // Check if provider is available at a given time
-    @Query("""
-           SELECT ps FROM ProviderSchedule ps 
-           WHERE ps.provider.id = :providerId 
-             AND ps.dayOfWeek = :dayOfWeek 
-             AND :time BETWEEN ps.startTime AND ps.endTime
-           """)
+    @Query(" SELECT ps FROM ProviderSchedule ps " +
+           "WHERE ps.provider.id = :providerId" +
+            " AND ps.dayOfWeek = :dayOfWeek " +
+             "AND :time BETWEEN ps.startTime AND ps.endTime")
     Optional<ProviderSchedule> isProviderAvailableAt(
             @Param("providerId") Long providerId,
             @Param("dayOfWeek") DayOfWeek dayOfWeek,

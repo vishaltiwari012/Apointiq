@@ -1,7 +1,6 @@
-package com.cw.scheduler.entity;
+package com.cw.scheduler.dto.response;
 
 import com.cw.scheduler.entity.enums.AvailabilityStatus;
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,29 +8,15 @@ import lombok.NoArgsConstructor;
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 
-@Entity
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ProviderSchedule {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class ProviderScheduleResponseDTO {
     private Long id;
-
-    @ManyToOne
-    @JoinColumn(name = "provider_id")
-    private ServiceProvider provider;
-
-    @ManyToOne
-    @JoinColumn(name = "service_id", nullable = false)
-    private OfferedService service;
-
+    private String offeredServiceName;
     private DayOfWeek dayOfWeek;
-
     private LocalTime startTime;
     private LocalTime endTime;
-
-    @Enumerated(EnumType.STRING)
     private AvailabilityStatus status;
 }
+

@@ -34,19 +34,4 @@ public class CloudinaryConfig {
         config.put("secure", "true");
         return new Cloudinary(config);
     }
-
-    @Bean(name = "multipartResolver")
-    public MultipartResolver multipartResolver() {
-        return new StandardServletMultipartResolver();
-    }
-
-    @Bean
-    public MultipartConfigElement multipartConfigElement() {
-        MultipartConfigFactory factory = new MultipartConfigFactory();
-        factory.setMaxFileSize(DataSize.parse("10MB"));
-        factory.setMaxRequestSize(DataSize.parse("20MB"));
-        return factory.createMultipartConfig();
-    }
-
-
 }
