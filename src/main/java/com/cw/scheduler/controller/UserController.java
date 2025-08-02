@@ -6,6 +6,7 @@ import com.cw.scheduler.dto.request.UserUpdateRequestDTO;
 import com.cw.scheduler.dto.response.ServiceProviderResponseDTO;
 import com.cw.scheduler.dto.response.UserProfileResponseDTO;
 import com.cw.scheduler.service.interfaces.UserService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+@Tag(name = "User APIs")
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
@@ -57,9 +59,6 @@ public class UserController {
         log.info(profilePicture.getOriginalFilename());
         return ResponseEntity.ok(userService.uploadProviderDocuments(profilePicture, idProof, licenseDoc));
     }
-
-
-
 
     @GetMapping("/provider-status")
     public ResponseEntity<ApiResponse<String>> getProviderApplicationStatus() {

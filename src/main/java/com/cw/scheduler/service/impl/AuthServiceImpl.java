@@ -7,6 +7,7 @@ import com.cw.scheduler.dto.response.LoginResponseDTO;
 import com.cw.scheduler.dto.response.UserResponseDTO;
 import com.cw.scheduler.entity.Role;
 import com.cw.scheduler.entity.User;
+import com.cw.scheduler.entity.enums.NotificationType;
 import com.cw.scheduler.exception.BadCredentialsException;
 import com.cw.scheduler.exception.DuplicateResourceException;
 import com.cw.scheduler.exception.UserNotFoundException;
@@ -21,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 import java.util.Set;
@@ -89,15 +91,15 @@ public class AuthServiceImpl implements AuthService {
 
     }
 
-
-
     private void validateEmail(String email) {
         if(userRepository.existsByEmail(email)) {
             throw new DuplicateResourceException("User is already registered with : " + email);
         }
     }
 
+    @Transactional
     private void sendWelcomeEmail(User user, String appUrl) {
+        notificationService.saveNotification(user, "Welcome to our platform!", NotificationType.REGISTRATION);
         String loginUrl = appUrl + "/auth/login";
         notificationService.sendEmail(
                 user.getEmail(),

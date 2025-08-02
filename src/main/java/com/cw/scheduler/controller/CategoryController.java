@@ -5,6 +5,7 @@ import com.cw.scheduler.dto.request.CategoryRequestDTO;
 import com.cw.scheduler.dto.response.CategoryResponseDTO;
 import com.cw.scheduler.dto.response.CategoryWithServiceCountDTO;
 import com.cw.scheduler.service.interfaces.CategoryService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Category APIs")
 @RestController
 @RequestMapping("/admin/categories")
 @RequiredArgsConstructor

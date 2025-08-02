@@ -1,6 +1,5 @@
-package com.cw.scheduler.service.impl;
+package com.cw.scheduler.strategy.notification;
 
-import com.cw.scheduler.strategy.notification.NotificationStrategy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

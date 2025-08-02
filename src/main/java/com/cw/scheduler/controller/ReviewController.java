@@ -4,6 +4,7 @@ import com.cw.scheduler.advice.ApiResponse;
 import com.cw.scheduler.dto.request.ReviewRequestDTO;
 import com.cw.scheduler.dto.response.ReviewResponseDTO;
 import com.cw.scheduler.service.interfaces.ReviewService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Review APIs")
 @RestController
 @RequestMapping("/reviews")
 @RequiredArgsConstructor

@@ -4,6 +4,7 @@ import com.cw.scheduler.advice.ApiResponse;
 import com.cw.scheduler.dto.request.CreateOfferingServiceRequestDTO;
 import com.cw.scheduler.dto.response.OfferingServiceResponseDTO;
 import com.cw.scheduler.service.interfaces.OfferingService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Offered Service APIs")
 @RestController
 @RequestMapping("/services")
 @RequiredArgsConstructor

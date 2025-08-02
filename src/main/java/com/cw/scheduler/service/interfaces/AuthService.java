@@ -8,6 +8,5 @@ import com.cw.scheduler.dto.response.UserResponseDTO;
 
 public interface AuthService {
     ApiResponse<UserResponseDTO> register(RegisterRequestDTO request, String appUrl);
-//    ApiResponse<Map<String, Object>> login(LoginRequestDTO request);
     ApiResponse<LoginResponseDTO> login(LoginRequestDTO request);
 }

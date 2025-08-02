@@ -35,7 +35,18 @@ public class SwaggerConfig {
                         .license(new License().name("Apache 2.0").url("http://springdoc.org"))
                 )
                 .tags(List.of(
-                        new Tag().name("Auth APIs").description("Authentication, login, registration, and role-based access control")
+                        new Tag().name("Auth APIs").description("Authentication, login, registration, and role-based access control"),
+                        new Tag().name("Admin APIs").description("Admin operations and dashboard functionality"),
+                        new Tag().name("Admin-Provider APIs").description("Admin actions related to service provider approvals"),
+                        new Tag().name("Appointment APIs").description("Appointment creation, update, and availability checks"),
+                        new Tag().name("Category APIs").description("Service category management"),
+                        new Tag().name("Individual Service APIs").description("Manage individual services under offered services"),
+                        new Tag().name("Offered Service APIs").description("Manage services offered by providers"),
+                        new Tag().name("Notification APIs").description("User and provider notification operations"),
+                        new Tag().name("Service Provider APIs").description("Service provider registration and profile"),
+                        new Tag().name("Review APIs").description("Service review and rating APIs"),
+                        new Tag().name("Schedule APIs").description("Provider schedule setup and retrieval"),
+                        new Tag().name("User APIs").description("User profile, details, and actions")
                 ))
                 .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
                 .components(new Components().addSecuritySchemes("bearerAuth",

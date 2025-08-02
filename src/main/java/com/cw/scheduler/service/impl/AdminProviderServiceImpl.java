@@ -6,6 +6,7 @@ import com.cw.scheduler.dto.response.ServiceProviderResponseDTO;
 import com.cw.scheduler.entity.ServiceProvider;
 import com.cw.scheduler.entity.User;
 import com.cw.scheduler.entity.enums.ApplicationStatus;
+import com.cw.scheduler.entity.enums.NotificationType;
 import com.cw.scheduler.exception.BadRequestException;
 import com.cw.scheduler.exception.UserNotFoundException;
 import com.cw.scheduler.repository.ServiceProviderRepository;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -129,6 +131,24 @@ public class AdminProviderServiceImpl implements AdminProviderService {
         return ApiResponse.success(responsePage, "Pending applications fetched successfully.");
     }
 
+    @Override
+    public ApiResponse<List<ServiceProviderResponseDTO>> getAllApprovedServiceProviders() {
+        List<User> approvedUsers = userRepository.findAllServiceProviders().stream()
+                .filter(user -> user.getServiceProvider() != null && user.getServiceProvider().getApplicationStatus().equals(ApplicationStatus.APPROVED))
+                .toList();
+
+        List<ServiceProviderResponseDTO> response = approvedUsers.stream()
+                .map(user -> {
+                    ServiceProvider provider = user.getServiceProvider();
+                    ServiceProviderResponseDTO dto = modelMapper.map(provider, ServiceProviderResponseDTO.class);
+                    dto.setUserId(provider.getUser().getId());
+                    return dto;
+                })
+                .toList();
+
+        return ApiResponse.success(response, "Approved service providers fetched successfully.");
+    }
+
     private void sendApprovalEmail(User user) {
         notificationService.sendEmail(
                 user.getEmail(),
@@ -138,6 +158,13 @@ public class AdminProviderServiceImpl implements AdminProviderService {
                         "name", user.getName(),
                         "dashboardUrl", "http://localhost:8085/provider/dashboard"
                 )
+        );
+
+        // Save notification
+        notificationService.saveNotification(
+                user,
+                "Your service provider application has been approved.",
+                NotificationType.APPLICATION_APPROVED
         );
     }
 
@@ -150,6 +177,13 @@ public class AdminProviderServiceImpl implements AdminProviderService {
                         "name", user.getName(),
                         "rejectionReason", rejectionReason
                 )
+        );
+
+        // Save notification
+        notificationService.saveNotification(
+                user,
+                "Your service provider application has been rejected. Reason: " + rejectionReason,
+                NotificationType.APPLICATION_REJECTED
         );
     }
 

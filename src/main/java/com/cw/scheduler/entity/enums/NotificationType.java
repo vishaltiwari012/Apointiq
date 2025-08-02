@@ -1,5 +1,9 @@
 package com.cw.scheduler.entity.enums;
 
 public enum NotificationType {
-    EMAIL, SMS, PUSH
+    REGISTRATION,
+    APPLICATION_APPROVED,
+    APPLICATION_REJECTED,
+    APPOINTMENT_BOOKED,
+    APPOINTMENT_CANCELLED
 }

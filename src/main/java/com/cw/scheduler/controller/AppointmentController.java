@@ -5,6 +5,7 @@ import com.cw.scheduler.dto.request.AppointmentRequestDTO;
 import com.cw.scheduler.dto.response.AppointmentResponseDTO;
 import com.cw.scheduler.entity.enums.AppointmentStatus;
 import com.cw.scheduler.service.interfaces.AppointmentService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
 
+@Tag(name = "Appointment APIs")
 @RestController
 @RequestMapping("/appointments")
 @RequiredArgsConstructor

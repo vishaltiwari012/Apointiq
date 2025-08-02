@@ -12,26 +12,15 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
-    Optional<User> findByName(String name);
-    Optional<User> findByPhoneNumber(String phoneNumber);
-
-    // Login with phone number or email
-    Optional<User> findByPhoneNumberOrEmail(String phoneNumber, String email);
-
-    // Check existence
     boolean existsByEmail(String email);
-    boolean existsByName(String name);
-    boolean existsByPhoneNumber(String phoneNumber);
 
-    // Get users by role
     @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = :roleName")
     List<User> findUsersByRole(@Param("roleName") String roleName);
 
-    // ✅ Soft-deleted users (if needed)
     @Query("SELECT u FROM User u WHERE u.active = false")
     List<User> findInactiveUsers();
 
-    // Get all providers
-    @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = 'PROVIDER'")
-    List<User> findAllProviders();
+    List<User> findByActiveTrue();
+    @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = 'SERVICE_PROVIDER'")
+    List<User> findAllServiceProviders();
 }

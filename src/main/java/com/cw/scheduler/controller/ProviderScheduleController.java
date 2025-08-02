@@ -4,6 +4,7 @@ import com.cw.scheduler.advice.ApiResponse;
 import com.cw.scheduler.dto.request.ProviderScheduleRequestDTO;
 import com.cw.scheduler.dto.response.ProviderScheduleResponseDTO;
 import com.cw.scheduler.service.interfaces.ProviderScheduleService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.List;
 
+@Tag(name = "Schedule APIs")
 @RestController
 @RequestMapping("/provider-schedule")
 @RequiredArgsConstructor
