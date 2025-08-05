@@ -60,7 +60,6 @@ public class ProviderScheduleController {
         }
     }
 
-
     @GetMapping("/available")
     @PreAuthorize("hasAnyRole('CUSTOMER', 'SERVICE_PROVIDER')")
     public ResponseEntity<Boolean> isProviderAvailable(

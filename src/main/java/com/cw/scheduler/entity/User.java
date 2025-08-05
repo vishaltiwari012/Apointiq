@@ -2,6 +2,7 @@ package com.cw.scheduler.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLDelete;
@@ -15,9 +16,7 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "users")
-@SQLDelete(sql = "UPDATE user SET active = false WHERE id = ?")
-//@Where(clause = "active = true")
-@SQLRestriction("active = true")
+@Builder
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

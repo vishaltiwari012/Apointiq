@@ -9,7 +9,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
-@Component
+@Component("authenticationFacade")
 @RequiredArgsConstructor
 @Slf4j
 public class AuthenticationFacadeImpl implements AuthenticationFacade{
@@ -34,5 +34,10 @@ public class AuthenticationFacadeImpl implements AuthenticationFacade{
                     log.error("User not found: {}", email);
                     return new UserNotFoundException("User not found with email : " + email);
                 });
+    }
+
+    @Override
+    public Long getCurrentUserId() {
+        return getCurrentUser().getId();
     }
 }

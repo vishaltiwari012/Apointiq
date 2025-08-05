@@ -42,27 +42,19 @@ public class AuthServiceImpl implements AuthService {
     private final NotificationService notificationService;
 
     @Override
+    @Transactional
     public ApiResponse<UserResponseDTO> register(RegisterRequestDTO request, String appUrl) {
-        log.info("Registering user: {}", request.getEmail());
+        log.info("Registering new user: {}", request.getEmail());
         validateEmail(request.getEmail());
-        User user = new User();
-        user.setName(request.getName());
-        user.setEmail(request.getEmail());
-        user.setPhoneNumber(request.getPhoneNumber());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRoles(Set.of(roleService.getCustomerRole()));
 
+        User user = buildNewUser(request);
         User savedUser = userRepository.save(user);
 
         sendWelcomeEmail(savedUser, appUrl);
 
-        log.info("User registered successfully: {}", user.getEmail());
+        log.info("User registered successfully: {}", savedUser.getEmail());
 
-        UserResponseDTO response = modelMapper.map(savedUser, UserResponseDTO.class);
-        response.setRoles(savedUser.getRoles().stream()
-                .map(Role::getName)
-                .collect(Collectors.toSet()));
-
+        UserResponseDTO response = mapToUserResponseDTO(savedUser);
         return ApiResponse.success(response, "User registered successfully.");
     }
 
@@ -71,9 +63,13 @@ public class AuthServiceImpl implements AuthService {
         log.info("Login attempt for: {}", request.getEmail());
 
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new UserNotFoundException("Invalid email"));
+                .orElseThrow(() -> {
+                    log.warn("Login failed: Email not found - {}", request.getEmail());
+                    return new UserNotFoundException("Invalid email");
+                });
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            log.warn("Login failed: Invalid password for email={}", request.getEmail());
             throw new BadCredentialsException("Invalid password");
         }
 
@@ -81,25 +77,41 @@ public class AuthServiceImpl implements AuthService {
                 userDetailsService.loadUserByUsername(user.getEmail()),
                 user.getId()
         );
-        String refreshToken = jwtService.generateRefreshToken(userDetailsService.loadUserByUsername(user.getEmail()));
+        String refreshToken = jwtService.generateRefreshToken(
+                userDetailsService.loadUserByUsername(user.getEmail())
+        );
 
         log.info("User logged in successfully: {}", user.getEmail());
 
-        LoginResponseDTO response = new LoginResponseDTO(user.getEmail(), jwtToken, refreshToken);
-
-        return ApiResponse.success(response, "Login successful");
-
+        return ApiResponse.success(
+                new LoginResponseDTO(user.getEmail(), jwtToken, refreshToken),
+                "Login successful"
+        );
     }
 
     private void validateEmail(String email) {
-        if(userRepository.existsByEmail(email)) {
-            throw new DuplicateResourceException("User is already registered with : " + email);
+        if (userRepository.existsByEmail(email)) {
+            log.warn("Registration failed: Duplicate email={}", email);
+            throw new DuplicateResourceException("User is already registered with: " + email);
         }
+    }
+
+    private User buildNewUser(RegisterRequestDTO request) {
+        return User.builder()
+                .name(request.getName())
+                .email(request.getEmail())
+                .phoneNumber(request.getPhoneNumber())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .roles(Set.of(roleService.getCustomerRole()))
+                .build();
     }
 
     @Transactional
     private void sendWelcomeEmail(User user, String appUrl) {
+        log.debug("Sending welcome notification to userId={}", user.getId());
+
         notificationService.saveNotification(user, "Welcome to our platform!", NotificationType.REGISTRATION);
+
         String loginUrl = appUrl + "/auth/login";
         notificationService.sendEmail(
                 user.getEmail(),
@@ -108,8 +120,17 @@ public class AuthServiceImpl implements AuthService {
                 Map.of(
                         "username", user.getName(),
                         "loginUrl", loginUrl
-                ));
-        log.info("Welcome Email sent to {}", user.getEmail());
+                )
+        );
+
+        log.info("Welcome email sent to {}", user.getEmail());
     }
 
+    private UserResponseDTO mapToUserResponseDTO(User user) {
+        UserResponseDTO dto = modelMapper.map(user, UserResponseDTO.class);
+        dto.setRoles(user.getRoles().stream()
+                .map(Role::getName)
+                .collect(Collectors.toSet()));
+        return dto;
+    }
 }

@@ -12,8 +12,11 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class AppointmentResponseDTO {
     private Long id;
+    private Long providerId;
+    private Long userId;
     private String individualServiceName;
     private String providerFullName;
     private LocalDateTime appointmentTime;
     private AppointmentStatus status;
+
 }

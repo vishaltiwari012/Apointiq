@@ -18,6 +18,8 @@ import com.cw.scheduler.util.CloudinaryUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -43,25 +45,26 @@ public class AdminProviderServiceImpl implements AdminProviderService {
 
     @Override
     public ApiResponse<String> approveProviderRequest(Long userId) {
+        log.info("Approving provider request for userId={}", userId);
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found with id : " + userId));
 
         ServiceProvider provider = getServiceProvider(user);
-
         provider.setApplicationStatus(ApplicationStatus.APPROVED);
         provider.setApprovedAt(LocalDateTime.now());
-        // Clear rejection-related data if present
         provider.setRejectedAt(null);
         provider.setRejectionReason(null);
         serviceProviderRepository.save(provider);
 
+        evictProviderCaches(provider.getUser().getId());
+
         user.getRoles().add(roleService.getServiceProviderRole());
         userRepository.save(user);
 
-        log.info("Approved service provider request for user: {}", user.getEmail());
-
         sendApprovalEmail(user);
 
+        log.info("Provider approved successfully for userId={}", userId);
         return ApiResponse.success("Service provider request approved.");
     }
 
@@ -85,17 +88,19 @@ public class AdminProviderServiceImpl implements AdminProviderService {
 
     @Override
     public ApiResponse<String> rejectProviderRequest(ProviderRejectionRequestDTO request) {
+        log.warn("Rejecting provider request for userId={} with reason={}", request.getUserId(), request.getRejectionReason());
+
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new UserNotFoundException("User not found with id : " + request.getUserId()));
 
         ServiceProvider provider = getProvider(user);
         deleteProviderUploadedDocuments(provider, user, request.getRejectionReason());
 
-        log.info("Rejected service provider request for user: {}, reason: {}",
-                user.getEmail(), request.getRejectionReason());
+        evictProviderCaches(user.getId());
 
         sendRejectionEmail(user, request.getRejectionReason());
 
+        log.info("Provider request rejected for userId={}", request.getUserId());
         return ApiResponse.success("Service provider request rejected and documents removed.");
     }
 
@@ -117,24 +122,31 @@ public class AdminProviderServiceImpl implements AdminProviderService {
     }
 
     @Override
-    public ApiResponse<Page<ServiceProviderResponseDTO>> getPendingProviderApplications(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("applicationDate").descending());
+    @Cacheable(value = "providerApplications", key = "'pending:' + #page + ':' + #size")
+    public ApiResponse<List<ServiceProviderResponseDTO>> getPendingProviderApplications(int page, int size) {
+        log.info("Fetching pending provider applications, page={}, size={}", page, size);
 
+        Pageable pageable = PageRequest.of(page, size, Sort.by("applicationDate").descending());
         Page<ServiceProvider> pendingProviders = serviceProviderRepository
                 .findAllByApplicationStatus(ApplicationStatus.PENDING, pageable);
 
-        Page<ServiceProviderResponseDTO> responsePage = pendingProviders.map(provider -> {
+        List<ServiceProviderResponseDTO> content = pendingProviders.map(provider -> {
             ServiceProviderResponseDTO dto = modelMapper.map(provider, ServiceProviderResponseDTO.class);
             dto.setUserId(provider.getUser().getId());
             return dto;
-        });
-        return ApiResponse.success(responsePage, "Pending applications fetched successfully.");
+        }).getContent();
+
+        return ApiResponse.success(content, "Pending applications fetched successfully.");
     }
 
     @Override
+    @Cacheable(value = "providerProfiles", key = "'approved'")
     public ApiResponse<List<ServiceProviderResponseDTO>> getAllApprovedServiceProviders() {
+        log.info("Fetching all approved service providers");
+
         List<User> approvedUsers = userRepository.findAllServiceProviders().stream()
-                .filter(user -> user.getServiceProvider() != null && user.getServiceProvider().getApplicationStatus().equals(ApplicationStatus.APPROVED))
+                .filter(user -> user.getServiceProvider() != null &&
+                        user.getServiceProvider().getApplicationStatus().equals(ApplicationStatus.APPROVED))
                 .toList();
 
         List<ServiceProviderResponseDTO> response = approvedUsers.stream()
@@ -221,4 +233,10 @@ public class AdminProviderServiceImpl implements AdminProviderService {
             log.error("Failed to delete Cloudinary files for user {}: {}", user.getEmail(), e.getMessage());
         }
     }
+
+    @CacheEvict(value = { "providerProfiles", "providerApplications" }, key = "#userId")
+    public void evictProviderCaches(Long userId) {
+        log.info("Evicting provider caches for userId={}", userId);
+    }
+
 }

@@ -23,7 +23,7 @@ public class AdminProviderController {
     private final AdminProviderService adminProviderService;
 
     @GetMapping("/pending")
-    public ResponseEntity<ApiResponse<Page<ServiceProviderResponseDTO>>> getPendingApplications(
+    public ResponseEntity<ApiResponse<List<ServiceProviderResponseDTO>>> getPendingApplications(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {

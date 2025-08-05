@@ -10,6 +10,6 @@ import java.util.List;
 public interface AdminProviderService {
     ApiResponse<String> approveProviderRequest(Long userId);
     ApiResponse<String> rejectProviderRequest(ProviderRejectionRequestDTO request);
-    ApiResponse<Page<ServiceProviderResponseDTO>> getPendingProviderApplications(int page, int size);
+    ApiResponse<List<ServiceProviderResponseDTO>> getPendingProviderApplications(int page, int size);
     ApiResponse<List<ServiceProviderResponseDTO>> getAllApprovedServiceProviders();
 }
