@@ -32,6 +32,8 @@ public class Appointment {
     @JoinColumn(name = "individual_service_id")
     private IndividualService individualService;
 
+    private String calendarEventId;
+
     @ManyToOne
     @JoinColumn(name = "provider_id")
     private ServiceProvider provider;

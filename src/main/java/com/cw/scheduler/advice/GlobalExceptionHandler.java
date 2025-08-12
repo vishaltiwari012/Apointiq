@@ -30,6 +30,18 @@ public class GlobalExceptionHandler {
         ));
     }
 
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ApiError> handleRateLimitExceeded(RateLimitExceededException ex, HttpServletRequest request) {
+        log.warn("Rate limit exceeded at {}: {}", request.getRequestURI(), ex.getMessage());
+        return buildErrorResponseEntity(new ApiError(
+                ex.getMessage(),
+                HttpStatus.TOO_MANY_REQUESTS,
+                request.getRequestURI(),
+                ErrorCode.RATE_LIMIT_EXCEEDED
+        ));
+    }
+
+
     // bad credentials exception
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiError> handleBadCredentials(BadCredentialsException ex, HttpServletRequest request) {
@@ -58,7 +70,6 @@ public class GlobalExceptionHandler {
     // User not found
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ApiError> handleUserNotFound(UserNotFoundException ex, HttpServletRequest request) {
-        ex.printStackTrace();
         log.warn("User not found at {}: {}", request.getRequestURI(), ex.getMessage());
         return buildErrorResponseEntity(new ApiError(
                 ex.getMessage(),

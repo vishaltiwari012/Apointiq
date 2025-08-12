@@ -1,10 +1,12 @@
 package com.cw.scheduler.dto.request;
 
 import com.cw.scheduler.entity.enums.AvailabilityStatus;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.Data;
+
 import java.time.DayOfWeek;
 import java.time.LocalTime;
-import jakarta.validation.constraints.*;
 
 @Data
 public class ProviderScheduleRequestDTO {

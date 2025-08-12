@@ -3,8 +3,12 @@ package com.cw.scheduler.service.impl;
 import com.cw.scheduler.advice.ApiResponse;
 import com.cw.scheduler.dto.request.AppointmentRequestDTO;
 import com.cw.scheduler.dto.response.AppointmentResponseDTO;
-import com.cw.scheduler.entity.*;
+import com.cw.scheduler.entity.Appointment;
+import com.cw.scheduler.entity.IndividualService;
+import com.cw.scheduler.entity.ServiceProvider;
+import com.cw.scheduler.entity.User;
 import com.cw.scheduler.entity.enums.AppointmentStatus;
+import com.cw.scheduler.entity.enums.NotificationType;
 import com.cw.scheduler.exception.BadRequestException;
 import com.cw.scheduler.exception.ResourceNotFoundException;
 import com.cw.scheduler.repository.AppointmentRepository;
@@ -12,6 +16,7 @@ import com.cw.scheduler.repository.IndividualServiceRepository;
 import com.cw.scheduler.repository.ProviderScheduleRepository;
 import com.cw.scheduler.security.AuthenticationFacade;
 import com.cw.scheduler.service.interfaces.AppointmentService;
+import com.cw.scheduler.service.interfaces.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -25,7 +30,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -37,23 +42,62 @@ public class AppointmentServiceImpl implements AppointmentService {
     private final ProviderScheduleRepository providerScheduleRepository;
     private final AuthenticationFacade authenticationFacade;
     private final ModelMapper modelMapper;
+    private final NotificationService notificationService;
+
+//    @Override
+//    @Caching(evict = {
+//            @CacheEvict(value = "userAppointments", key = "@authenticationFacade.getCurrentUser().serviceProvider.id"),
+//            @CacheEvict(value = "providerAppointments", key = "#result.providerId"),
+//            @CacheEvict(value = "upcomingAppointments", key = "#result.providerId"),
+//            @CacheEvict(value = "appointmentsByDate", key = "#result.providerId + '_' + #requestDTO.appointmentTime.toLocalDate()")
+//    })
+//    public ApiResponse<AppointmentResponseDTO> bookAppointment(AppointmentRequestDTO requestDTO) {
+//        User currentUser = authenticationFacade.getCurrentUser();
+//        log.info("Booking appointment for userId={} at {}", currentUser.getId(), requestDTO.getAppointmentTime());
+//
+//        IndividualService service = individualServiceRepository.findById(requestDTO.getIndividualServiceId())
+//                .orElseThrow(() -> {
+//                    log.warn("Service not found with id={}", requestDTO.getIndividualServiceId());
+//                    return new ResourceNotFoundException("Particular Service not found");
+//                });
+//
+//        ServiceProvider provider = service.getOfferedService().getProvider();
+//        validateProviderAvailability(provider.getId(), requestDTO.getAppointmentTime());
+//
+//        Appointment appointment = new Appointment();
+//        appointment.setUser(currentUser);
+//        appointment.setIndividualService(service);
+//        appointment.setProvider(provider);
+//        appointment.setAppointmentTime(requestDTO.getAppointmentTime());
+//        appointment.setStatus(AppointmentStatus.CONFIRMED);
+//
+//        Appointment saved = appointmentRepository.save(appointment);
+//
+//        // Add to Google Calendar
+//        String eventId = googleCalendarService.addEventToCalendar(saved, currentUser);
+//        saved.setCalendarEventId(eventId);
+//        appointmentRepository.save(saved);
+//
+//        // Send confirmation email & notification
+//        sendAppointmentConfirmationEmail(saved);
+//
+//        log.info("Appointment booked successfully: appointmentId={}", saved.getId());
+//        return ApiResponse.success(toDTO(saved), "Appointment booked successfully.");
+//    }
 
     @Override
     @Caching(evict = {
             @CacheEvict(value = "userAppointments", key = "@authenticationFacade.getCurrentUser().serviceProvider.id"),
-            @CacheEvict(value = "providerAppointments", key = "#result.providerId"),
-            @CacheEvict(value = "upcomingAppointments", key = "#result.providerId"),
-            @CacheEvict(value = "appointmentsByDate", key = "#result.providerId + '_' + #requestDTO.appointmentTime.toLocalDate()")
+            @CacheEvict(value = "providerAppointments", key = "#result.provider.id"),
+            @CacheEvict(value = "upcomingAppointments", key = "#result.provider.id"),
+            @CacheEvict(value = "appointmentsByDate",
+                    key = "#result.provider.id + '_' + #requestDTO.appointmentTime.toLocalDate()")
     })
-    public ApiResponse<AppointmentResponseDTO> bookAppointment(AppointmentRequestDTO requestDTO) {
+    public Appointment bookAppointmentAndReturnEntity(AppointmentRequestDTO requestDTO) {
         User currentUser = authenticationFacade.getCurrentUser();
-        log.info("Booking appointment for userId={} at {}", currentUser.getId(), requestDTO.getAppointmentTime());
 
         IndividualService service = individualServiceRepository.findById(requestDTO.getIndividualServiceId())
-                .orElseThrow(() -> {
-                    log.warn("Service not found with id={}", requestDTO.getIndividualServiceId());
-                    return new ResourceNotFoundException("Particular Service not found");
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("Service not found"));
 
         ServiceProvider provider = service.getOfferedService().getProvider();
         validateProviderAvailability(provider.getId(), requestDTO.getAppointmentTime());
@@ -63,12 +107,13 @@ public class AppointmentServiceImpl implements AppointmentService {
         appointment.setIndividualService(service);
         appointment.setProvider(provider);
         appointment.setAppointmentTime(requestDTO.getAppointmentTime());
-        appointment.setStatus(AppointmentStatus.PENDING);
+        appointment.setStatus(AppointmentStatus.CONFIRMED);
 
         Appointment saved = appointmentRepository.save(appointment);
 
-        log.info("Appointment booked successfully: appointmentId={}", saved.getId());
-        return ApiResponse.success(toDTO(saved), "Appointment booked successfully.");
+        sendAppointmentConfirmationEmail(saved);
+
+        return saved;
     }
 
     @Override
@@ -96,33 +141,14 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
 
         appointment.setStatus(AppointmentStatus.CANCELLED);
+
         appointmentRepository.save(appointment);
+
+        // Send cancellation email
+        sendAppointmentCancellationEmail(appointment);
 
         log.info("Appointment cancelled: appointmentId={}", appointmentId);
         return ApiResponse.success("Appointment cancelled successfully.");
-    }
-
-    @Override
-    @Cacheable(value = "providerAppointments", key = "@authenticationFacade.getCurrentUser().serviceProvider.id")
-    public ApiResponse<List<AppointmentResponseDTO>> getProviderAppointments() {
-        ServiceProvider provider = authenticationFacade.getCurrentUser().getServiceProvider();
-        log.debug("Fetching appointments for providerId={}", provider.getId());
-
-        List<Appointment> appointments = appointmentRepository.findByProviderId(provider.getId());
-        return ApiResponse.success(appointments.stream().map(this::toDTO).toList(),
-                "Fetched provider appointments.");
-    }
-
-    @Override
-    @Cacheable(value = "upcomingAppointments", key = "@authenticationFacade.getCurrentUser().serviceProvider.id")
-    public ApiResponse<List<AppointmentResponseDTO>> getUpcomingAppointments() {
-        ServiceProvider provider = authenticationFacade.getCurrentUser().getServiceProvider();
-        log.debug("Fetching upcoming appointments for providerId={}", provider.getId());
-
-        List<Appointment> appointments = appointmentRepository.findUpcomingAppointmentsForProvider(
-                provider.getId(), LocalDateTime.now());
-        return ApiResponse.success(appointments.stream().map(this::toDTO).toList(),
-                "Fetched upcoming appointments.");
     }
 
     @Override
@@ -153,6 +179,29 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
+    @Cacheable(value = "providerAppointments", key = "@authenticationFacade.getCurrentUser().serviceProvider.id")
+    public ApiResponse<List<AppointmentResponseDTO>> getProviderAppointments() {
+        ServiceProvider provider = authenticationFacade.getCurrentUser().getServiceProvider();
+        log.debug("Fetching appointments for providerId={}", provider.getId());
+
+        List<Appointment> appointments = appointmentRepository.findByProviderId(provider.getId());
+        return ApiResponse.success(appointments.stream().map(this::toDTO).toList(),
+                "Fetched provider appointments.");
+    }
+
+    @Override
+    @Cacheable(value = "upcomingAppointments", key = "@authenticationFacade.getCurrentUser().serviceProvider.id")
+    public ApiResponse<List<AppointmentResponseDTO>> getUpcomingAppointments() {
+        ServiceProvider provider = authenticationFacade.getCurrentUser().getServiceProvider();
+        log.debug("Fetching upcoming appointments for providerId={}", provider.getId());
+
+        List<Appointment> appointments = appointmentRepository.findUpcomingAppointmentsForProvider(
+                provider.getId(), LocalDateTime.now());
+        return ApiResponse.success(appointments.stream().map(this::toDTO).toList(),
+                "Fetched upcoming appointments.");
+    }
+
+    @Override
     @Cacheable(value = "appointmentsByDate", key = "@authenticationFacade.getCurrentUser().serviceProvider.id + '_' + #date")
     public ApiResponse<List<AppointmentResponseDTO>> getAppointmentsForDate(LocalDate date) {
         ServiceProvider provider = authenticationFacade.getCurrentUser().getServiceProvider();
@@ -166,6 +215,11 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         return ApiResponse.success(appointments.stream().map(this::toDTO).toList(),
                 "Appointments for date: " + date);
+    }
+
+    @Override
+    public void save(Appointment appointment) {
+        appointmentRepository.save(appointment);
     }
 
     private AppointmentResponseDTO toDTO(Appointment appointment) {
@@ -194,4 +248,68 @@ public class AppointmentServiceImpl implements AppointmentService {
             throw new BadRequestException("The provider already has an appointment at this time.");
         }
     }
+
+    private void sendAppointmentConfirmationEmail(Appointment appointment) {
+        User user = appointment.getUser();
+
+        // Send email using HTML template
+        notificationService.sendEmail(
+                user.getEmail(),
+                "Your Appointment is Confirmed!",
+                "appointment-confirmation",
+                Map.of(
+                        "name", user.getName(),
+                        "serviceName", appointment.getIndividualService().getName(),
+                        "providerName", appointment.getProvider().getBusinessName(),
+                        "appointmentDate", appointment.getAppointmentTime().toLocalDate().toString(),
+                        "appointmentTime", appointment.getAppointmentTime().toLocalTime().toString(),
+                        "dashboardUrl", "http://localhost:8085/user/appointments"
+                )
+        );
+
+        // Save notification in DB
+        notificationService.saveNotification(
+                user,
+                String.format(
+                        "Your appointment for %s with %s on %s at %s is confirmed.",
+                        appointment.getIndividualService().getName(),
+                        appointment.getProvider().getBusinessName(),
+                        appointment.getAppointmentTime().toLocalDate(),
+                        appointment.getAppointmentTime().toLocalTime()
+                ),
+                NotificationType.APPOINTMENT_CONFIRMED
+        );
+    }
+
+    private void sendAppointmentCancellationEmail(Appointment appointment) {
+        User user = appointment.getUser();
+
+        notificationService.sendEmail(
+                user.getEmail(),
+                "Your Appointment Has Been Cancelled",
+                "appointment-cancellation.html", // Thymeleaf template
+                Map.of(
+                        "name", user.getName(),
+                        "serviceName", appointment.getIndividualService().getName(),
+                        "providerName", appointment.getProvider().getBusinessName(),
+                        "appointmentDate", appointment.getAppointmentTime().toLocalDate().toString(),
+                        "appointmentTime", appointment.getAppointmentTime().toLocalTime().toString(),
+                        "dashboardUrl", "http://localhost:8085/user/appointments"
+                )
+        );
+
+        notificationService.saveNotification(
+                user,
+                String.format(
+                        "Your appointment for %s with %s on %s at %s has been cancelled.",
+                        appointment.getIndividualService().getName(),
+                        appointment.getProvider().getBusinessName(),
+                        appointment.getAppointmentTime().toLocalDate(),
+                        appointment.getAppointmentTime().toLocalTime()
+                ),
+                NotificationType.APPOINTMENT_CANCELLED
+        );
+    }
+
+
 }

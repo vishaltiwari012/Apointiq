@@ -4,7 +4,6 @@ import com.cw.scheduler.advice.ApiResponse;
 import com.cw.scheduler.dto.response.UserResponseDTO;
 
 import java.util.List;
-import java.util.Map;
 
 public interface AdminService {
     ApiResponse<List<UserResponseDTO>> getAllUsers();

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Appointment Cancelled</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f6f9fc;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 30px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .header {
+            background-color: #E53935;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .content {
+            padding: 25px;
+            color: #333333;
+        }
+        .details {
+            background-color: #f1f1f1;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 18px;
+            background-color: #E53935;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .footer {
+            font-size: 12px;
+            color: #777;
+            text-align: center;
+            padding: 15px;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Your Appointment Has Been Cancelled</h1>
+    </div>
+    <div class="content">
+        <h2>Hello <span th:text="${name}"></span>,</h2>
+        <p>Your appointment has been successfully cancelled.</p>
+
+        <div class="details">
+            <p><strong>Service:</strong> <span th:text="${serviceName}"></span></p>
+            <p><strong>Provider:</strong> <span th:text="${providerName}"></span></p>
+            <p><strong>Date:</strong> <span th:text="${appointmentDate}"></span></p>
+            <p><strong>Time:</strong> <span th:text="${appointmentTime}"></span></p>
+        </div>
+
+        <p>If you wish, you can book another appointment by clicking the button below:</p>
+        <a th:href="${dashboardUrl}" class="btn">Book Again</a>
+    </div>
+    <div class="footer">
+        <p>Thank you for considering our services. We hope to see you again soon!</p>
+        <p>&copy; 2025 Apointiq. All rights reserved.</p>
+    </div>
+</div>
+</body>
+</html>

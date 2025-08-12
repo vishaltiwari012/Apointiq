@@ -3,7 +3,6 @@ package com.cw.scheduler.service.interfaces;
 import com.cw.scheduler.advice.ApiResponse;
 import com.cw.scheduler.dto.request.ProviderRejectionRequestDTO;
 import com.cw.scheduler.dto.response.ServiceProviderResponseDTO;
-import org.springframework.data.domain.Page;
 
 import java.util.List;
 

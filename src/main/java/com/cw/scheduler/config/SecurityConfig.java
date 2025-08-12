@@ -35,6 +35,7 @@ public class SecurityConfig {
 
     private static final String[] WHITE_LIST_URLS = {
             "/auth/**",
+            "/test/**",
             "/v3/api-docs/**",          // OpenAPI docs
             "/swagger-ui/**",           // Swagger UI
             "/swagger-ui.html",         // Swagger UI HTML

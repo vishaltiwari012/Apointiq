@@ -3,7 +3,9 @@ package com.cw.scheduler.controller;
 import com.cw.scheduler.advice.ApiResponse;
 import com.cw.scheduler.dto.request.CreateIndividualServiceRequestDTO;
 import com.cw.scheduler.dto.response.IndividualServiceResponseDTO;
+import com.cw.scheduler.ratelimit.RateLimit;
 import com.cw.scheduler.service.interfaces.IndividualServiceManager;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,8 @@ public class IndividualServiceController {
 
     private final IndividualServiceManager individualServiceManager;
 
+    @RateLimit(capacity = 5, refillTokens = 1, refillDurationSeconds = 60)
+    @Operation(summary = "Create individual service", description = "Creates a new individual service under a specific offered service.")
     @PostMapping("/{offeredServiceId}")
     public ResponseEntity<ApiResponse<IndividualServiceResponseDTO>> create(
             @PathVariable Long offeredServiceId,
@@ -29,6 +33,8 @@ public class IndividualServiceController {
         return ResponseEntity.ok(individualServiceManager.createIndividualService(offeredServiceId, request));
     }
 
+    @RateLimit(capacity = 10, refillTokens = 2, refillDurationSeconds = 60)
+    @Operation(summary = "Get all individual services", description = "Retrieves all individual services for a specific offered service.")
     @GetMapping("/{offeredServiceId}")
     public ResponseEntity<ApiResponse<List<IndividualServiceResponseDTO>>> getAll(
             @PathVariable Long offeredServiceId) {
